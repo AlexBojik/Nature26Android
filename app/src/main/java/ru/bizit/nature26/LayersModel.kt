@@ -14,5 +14,7 @@ data class Layer(
     var layers: MutableList<Layer>? = null,
     var isGroup: Boolean,
     var cluster: Boolean,
-    var visible: Boolean = false
+    var visible: Boolean = false,
+    var lineWidth: Int,
+    var lineColor: String?
 )

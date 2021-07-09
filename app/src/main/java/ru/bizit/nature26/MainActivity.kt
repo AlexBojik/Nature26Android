@@ -129,6 +129,11 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                     }
                 }
 
+                val warningButton = findViewById<FloatingActionButton>(R.id.warningButton)
+                warningButton.setOnClickListener {
+                    getNews()
+                }
+
                 appData.newBase.subscribeBy(
                     onNext = { newBase -> changeBase(newBase, style) }
                 )
@@ -260,13 +265,19 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 if (source != null) {
                     val l = style.getLayer("layer" + child.id.toString())
                     val lp = style.getLayer("layer" + child.id.toString() + "-point")
+                    val lc = style.getLayer("layer" + child.id.toString() + "-cluster")
+                    val ll = style.getLayer("layer" + child.id.toString() + "-line")
 
                     if (child.visible) {
                         l?.setProperties(visibility(VISIBLE))
                         lp?.setProperties(visibility(VISIBLE))
+                        lc?.setProperties(visibility(VISIBLE))
+                        ll?.setProperties(visibility(VISIBLE))
                     } else {
                         l?.setProperties(visibility(Property.NONE))
                         lp?.setProperties(visibility(Property.NONE))
+                        lc?.setProperties(visibility(Property.NONE))
+                        ll?.setProperties(visibility(Property.NONE))
                     }
                 } else if (child.visible) {
                     loadGeoJson(child, style)
@@ -290,7 +301,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
     private fun drawFill(layer: Layer, style: Style) {
         val id = "layer" + layer.id.toString()
         val fillLayer = FillLayer(id, id)
-        fillLayer.setProperties(layer.color?.toUpperCase()?.toColorInt()?.let {
+        fillLayer.setProperties(layer.color?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
             fillColor(it)
         })
 
@@ -313,7 +324,16 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
             symbolStyle.setFilter(eq(geometryType(), literal("Point")))
             style.addLayer(symbolStyle)
         }
-
+        if (layer.lineWidth > 0 && layer.lineColor?.isNotEmpty() == true) {
+            val id = "layer" + layer.id.toString()
+            val lineLayer = LineLayer("$id-line", id)
+            lineLayer.setProperties(layer.lineColor?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
+                lineColor(it)
+            })
+            lineLayer.setProperties(lineWidth(layer.lineWidth.toFloat()))
+            lineLayer.setFilter(eq(geometryType(), literal("Polygon")))
+            style.addLayer(lineLayer)
+        }
     }
 
     private fun drawPoints(layer: Layer, style: Style) {
@@ -321,7 +341,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
 
         if (layer.symbol.isNullOrEmpty()) {
             val pointStyle = CircleLayer("$id-point", id)
-            pointStyle.setProperties(layer.color?.toUpperCase()?.toColorInt()?.let {
+            pointStyle.setProperties(layer.color?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
                 circleColor(it)
             })
             pointStyle.setProperties(circleRadius(6f))
@@ -349,6 +369,23 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 response: Response<MutableList<BaseLayer>>
             ) {
                 appData.baseLayers = response.body() as MutableList<BaseLayer>
+            }
+        })
+    }
+
+    private fun getNews() {
+        mService.getNews().enqueue(object : Callback<MutableList<News>> {
+            override fun onFailure(call: Call<MutableList<News>>, t: Throwable) {}
+
+            override fun onResponse(
+                call: Call<MutableList<News>>,
+                response: Response<MutableList<News>>
+            ) {
+                appData.loadedNews = response.body() as MutableList<News>
+                val q = 1
+                NewsBottomSheetDialog().apply {
+                    show(supportFragmentManager, NewsBottomSheetDialog.TAG)
+                }
             }
         })
     }

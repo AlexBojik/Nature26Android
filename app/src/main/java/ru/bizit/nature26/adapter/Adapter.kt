@@ -7,10 +7,15 @@ import android.widget.*
 import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_feature.view.*
+import kotlinx.android.synthetic.main.item_feature.view.description
 import kotlinx.android.synthetic.main.item_layer.view.*
 import kotlinx.android.synthetic.main.item_layer.view.feature_color
 import kotlinx.android.synthetic.main.item_layer.view.feature_name
+import kotlinx.android.synthetic.main.item_news.view.*
 import ru.bizit.nature26.*
+import java.text.DateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class FeatureListAdapter(private val featureList: MutableList<Feature>, private val appData: AppData): RecyclerView.Adapter<FeatureListAdapter.MyViewHolder>() {
@@ -43,6 +48,27 @@ class FeatureListAdapter(private val featureList: MutableList<Feature>, private 
     }
 
     override fun getItemCount() = featureList.size
+}
+
+class NewsListAdapter(private val newsList: MutableList<News>, private val appData: AppData): RecyclerView.Adapter<NewsListAdapter.MyViewHolder>() {
+    class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    private lateinit var parent: ViewGroup
+
+    override fun onCreateViewHolder(parent: ViewGroup,
+                                    viewType: Int): MyViewHolder {
+        this.parent = parent
+        val itemView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_news, parent, false) as View
+        return MyViewHolder(itemView)
+    }
+
+    override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+        val current = newsList[position]
+        holder.itemView.start.text = DateFormat.getDateInstance(DateFormat.LONG).format(current.start)
+        holder.itemView.description.loadData(current.description, "", "")
+    }
+
+    override fun getItemCount() = newsList.size
 }
 
 class ExpandableListAdapter(private val layerList: MutableList<Layer>): BaseExpandableListAdapter() {

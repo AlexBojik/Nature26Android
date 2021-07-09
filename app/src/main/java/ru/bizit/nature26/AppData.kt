@@ -16,6 +16,7 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 import io.reactivex.rxjava3.subjects.BehaviorSubject
+import java.util.*
 
 class Feature(
     var id: Int,
@@ -39,6 +40,11 @@ class GeoObject (
     var description: String
 )
 
+class News (
+    var id: Int,
+    var start: Date,
+    var description: String
+) {}
 
 
 class AppData() {
@@ -70,6 +76,7 @@ class AppData() {
     var selectedLayers: MutableList<String> = mutableListOf()
     var featureLoading: BehaviorSubject<Boolean> = BehaviorSubject.create()
     var loadedFeatures: MutableList<GeoObject> = mutableListOf()
+    var loadedNews: MutableList<News> = mutableListOf()
     var selectedObjects: MutableMap<Int, GeoObject> = mutableMapOf()
     var linearLayers: MutableMap<Int, Layer> = mutableMapOf()
     var user: User = User()
@@ -103,6 +110,7 @@ class AndroidModule(context: Context) {
         BaseLayersModule::class,
         LayersModule::class,
         FeaturesModule::class,
+        NewsModule::class,
         ShareModule::class,
         AuthenticationActivityModule::class,
     )
