@@ -21,11 +21,11 @@ abstract class FeaturesModule {
 
 class FeaturesBottomSheetDialog : DaggerBottomSheetDialogFragment() {
     @Inject
-    @field:Named("Long Live")
+    @Named("Long Live")
     lateinit var appData: AppData
 
-    lateinit var adapter: FeatureListAdapter
-    lateinit var layoutManager: LinearLayoutManager
+    private lateinit var adapter: FeatureListAdapter
+    private lateinit var layoutManager: LinearLayoutManager
 
     companion object {
         const val TAG = "FeaturesBottomSheetDialog"
@@ -45,12 +45,12 @@ class FeaturesBottomSheetDialog : DaggerBottomSheetDialogFragment() {
             if (layer != null) {
                 if (!layers.contains(layer.id)) {
                     layers.add(layer.id)
-                    if (!layer.commonName.isBlank() && layer.commonDescription != null) {
-                        val lf = Feature(go.id, layer.commonName, layer.commonDescription!!, layer.color, layer.symbol)
+                    if (layer.commonName.isNotBlank() && layer.commonDescription != null) {
+                        val lf = Feature(go.id, layer.commonName, layer.commonDescription!!, layer.color, layer.symbol, go)
                         featureList.add(0, lf)
                     }
                 }
-                val f = Feature(go.id, go.name, go.description, layer.color, layer.symbol)
+                val f = Feature(go.id, go.name, go.description, layer.color, layer.symbol, go)
                 featureList.add(f)
             }
         }
@@ -61,6 +61,7 @@ class FeaturesBottomSheetDialog : DaggerBottomSheetDialogFragment() {
         val featureListView = sheet.findViewById<RecyclerView>(R.id.featureList)
         featureListView.adapter = adapter
         featureListView.layoutManager = layoutManager
+
         return sheet
     }
 }

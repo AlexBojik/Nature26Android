@@ -8,14 +8,22 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.RectF
 import android.os.Bundle
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.graphics.toColorInt
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mapbox.android.core.permissions.PermissionsListener
 import com.mapbox.android.core.permissions.PermissionsManager
+import com.mapbox.geojson.*
 import com.mapbox.geojson.Feature
 import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions
 import com.mapbox.mapboxsdk.location.LocationComponentOptions
 import com.mapbox.mapboxsdk.location.modes.CameraMode
@@ -83,7 +91,6 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync { mapboxMap ->
             this.mapboxMap = mapboxMap
-
             this.mapboxMap.setStyle(Style.Builder().fromJson(appData.background)) { style ->
                 this.addBaseLayer(style)
 
@@ -134,6 +141,28 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                     getNews()
                 }
 
+                val searchButton = findViewById<FloatingActionButton>(R.id.searchButton)
+                val searchTextEdit = findViewById<EditText>(R.id.searchTextEdit)
+                val searchView = findViewById<View>(R.id.searchView)
+                searchButton.setOnClickListener {
+                    searchButton.visibility = View.INVISIBLE
+                    searchTextEdit.visibility = View.VISIBLE
+                    searchView.visibility = View.VISIBLE
+                }
+
+                searchTextEdit.onSubmit {
+                    val imm: InputMethodManager = searchTextEdit.context.getSystemService(
+                        INPUT_METHOD_SERVICE
+                    ) as InputMethodManager
+                    getFeatures(searchTextEdit.text.toString())
+                    imm.hideSoftInputFromWindow(searchTextEdit.windowToken, 0)
+
+                    searchButton.visibility = View.VISIBLE
+                    searchTextEdit.visibility = View.INVISIBLE
+                    searchView.visibility = View.INVISIBLE
+
+                }
+
                 appData.newBase.subscribeBy(
                     onNext = { newBase -> changeBase(newBase, style) }
                 )
@@ -155,6 +184,41 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                         }
                     }
                 )
+
+                appData.featureToFly.subscribeBy {
+                    appData.layers.forEach { l ->
+                        l.layers?.forEach { lc ->
+                            if (lc.id == it.geoObject.layerId) {
+                                lc.visible = true
+                            }
+                        }
+                    }
+                    appData.layersChanged.onNext(true)
+
+                    val type = it.geoObject.geoJson?.get("type")?.asString
+                    val pos = LatLng()
+
+                    when (type) {
+                        "Point" -> {
+                            val p = Point.fromJson(it.geoObject.geoJson.toString())
+                            pos.latitude = p.latitude()
+                            pos.longitude = p.longitude()
+                        }
+                        "Polygon" -> {
+                            val p = Polygon.fromJson(it.geoObject.geoJson.toString()).coordinates()[0][0]
+                            pos.latitude = p.latitude()
+                            pos.longitude = p.longitude()
+                        }
+                        "MultiPolygon" -> {
+                            val p = MultiPolygon.fromJson(it.geoObject.geoJson.toString()).coordinates()[0][0][0]
+                            pos.latitude = p.latitude()
+                            pos.longitude = p.longitude()
+                        }
+                    }
+
+                    val position = CameraPosition.Builder().target(pos).zoom(15.0).build()
+                    mapboxMap.animateCamera(CameraUpdateFactory.newCameraPosition(position), 1000)
+                }
                 enableLocationComponent(style)
             }
             this.mapboxMap.addOnMapClickListener { point ->
@@ -182,7 +246,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                     appData.featureLoading.onNext(true)
                     if (appData.features.isNotEmpty()) {
                         val filter = Filter(2, appData.features.joinToString(","))
-                        mService.filter(filter).enqueue(object : Callback<MutableList<GeoObject>> {
+                        mService.filter(getHeaderMap(), filter).enqueue(object : Callback<MutableList<GeoObject>> {
                             override fun onFailure(
                                 call: Call<MutableList<GeoObject>>,
                                 t: Throwable
@@ -224,6 +288,14 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
         }
     }
 
+    private fun EditText.onSubmit(func: () -> Unit) {
+        setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                func()
+            }
+            true
+        }
+    }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -288,32 +360,27 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
 
     private fun loadGeoJson(layer: Layer, style: Style) {
         val geoJsonUrl = URI("http://nature.mpr26.ru/api/layers/" + layer.id.toString())
-//        val geoJsonUrl = URI("http://192.168.31.158:3000/layers/" + layer.id.toString())
-//        val geoJsonUrl = URI("http://192.168.121.150:3000/layers/" + layer.id.toString())
         val source = GeoJsonSource("layer" + layer.id.toString(), geoJsonUrl)
         style.addSource(source)
-        if (!layer.color.isNullOrEmpty()) {
-            drawFill(layer, style)
-            drawPoints(layer, style)
-        }
+        drawFill(layer, style)
+        drawPoints(layer, style)
     }
 
     private fun drawFill(layer: Layer, style: Style) {
-        val id = "layer" + layer.id.toString()
-        val fillLayer = FillLayer(id, id)
-        fillLayer.setProperties(layer.color?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
-            fillColor(it)
-        })
+        if (!layer.color.isNullOrEmpty()) {
+            val id = "layer" + layer.id.toString()
+            val fillLayer = FillLayer(id, id)
+            fillLayer.setProperties(layer.color?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
+                fillColor(it)
+            })
 
-        fillLayer.withProperties(fillOpacity(.7f))
-        fillLayer.setFilter(eq(geometryType(), literal("Polygon")))
-        style.addLayer(fillLayer)
-
+            fillLayer.withProperties(fillOpacity(.7f))
+            fillLayer.setFilter(eq(geometryType(), literal("Polygon")))
+            style.addLayer(fillLayer)
+        }
         if (!layer.symbol.isNullOrEmpty()) {
             val idCluster = "cluster" + layer.id.toString()
             val geoJsonUrl = URI("http://nature.mpr26.ru/api/cluster/" + layer.id.toString())
-//        val geoJsonUrl = URI("http://192.168.31.158:3000/cluster/" + layer.id.toString())
-//        val geoJsonUrl = URI("http://192.168.121.150:3000/cluster/" + layer.id.toString())
             val source = GeoJsonSource(idCluster, geoJsonUrl)
             style.addSource(source)
 
@@ -340,15 +407,18 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
         val id = "layer" + layer.id.toString()
 
         if (layer.symbol.isNullOrEmpty()) {
-            val pointStyle = CircleLayer("$id-point", id)
-            pointStyle.setProperties(layer.color?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
-                circleColor(it)
-            })
-            pointStyle.setProperties(circleRadius(6f))
-            pointStyle.setProperties(circleStrokeColor(Color.WHITE))
-            pointStyle.setProperties(circleStrokeWidth(1f))
-            pointStyle.setFilter(eq(geometryType(), literal("Point")))
-            style.addLayer(pointStyle)
+            if (!layer.color.isNullOrEmpty()) {
+                val pointStyle = CircleLayer("$id-point", id)
+                pointStyle.setProperties(
+                    layer.color?.toUpperCase(Locale.ENGLISH)?.toColorInt()?.let {
+                        circleColor(it)
+                    })
+                pointStyle.setProperties(circleRadius(6f))
+                pointStyle.setProperties(circleStrokeColor(Color.WHITE))
+                pointStyle.setProperties(circleStrokeWidth(1f))
+                pointStyle.setFilter(eq(geometryType(), literal("Point")))
+                style.addLayer(pointStyle)
+            }
         } else {
             val symbolStyle = SymbolLayer("$id-point", id)
             symbolStyle.setProperties(iconImage(layer.symbol))
@@ -373,6 +443,24 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
         })
     }
 
+    private fun getFeatures(text: String) {
+        val filter = Filter(1, text)
+        mService.filter(getHeaderMap(), filter).enqueue(object : Callback<MutableList<GeoObject>> {
+            override fun onFailure(
+                call: Call<MutableList<GeoObject>>,
+                t: Throwable
+            ) {}
+
+            override fun onResponse(
+                call: Call<MutableList<GeoObject>>,
+                response: Response<MutableList<GeoObject>>
+            ) {
+                appData.loadedFeatures = response.body() as MutableList<GeoObject>
+                appData.featureLoading.onNext(false)
+            }
+        })
+    }
+
     private fun getNews() {
         mService.getNews().enqueue(object : Callback<MutableList<News>> {
             override fun onFailure(call: Call<MutableList<News>>, t: Throwable) {}
@@ -382,8 +470,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 response: Response<MutableList<News>>
             ) {
                 appData.loadedNews = response.body() as MutableList<News>
-                val q = 1
-                NewsBottomSheetDialog().apply {
+                 NewsBottomSheetDialog().apply {
                     show(supportFragmentManager, NewsBottomSheetDialog.TAG)
                 }
             }
@@ -391,7 +478,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
     }
 
     private fun getLayers() {
-        mService.getLayers().enqueue(object : Callback<MutableList<Layer>> {
+        mService.getLayers(getHeaderMap()).enqueue(object : Callback<MutableList<Layer>> {
             override fun onFailure(call: Call<MutableList<Layer>>, t: Throwable) {}
 
             override fun onResponse(
@@ -406,6 +493,16 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 }
             }
         })
+    }
+
+    private fun getHeaderMap(): Map<String, String> {
+        val headerMap = mutableMapOf<String, String>()
+        headerMap["Token"] = getToken()?:""
+        return headerMap
+    }
+
+    private fun getToken(): String? {
+        return getSharedPreferences("token", Context.MODE_PRIVATE).getString("token", "")
     }
 
     private fun addBaseLayer(style: Style) {
@@ -492,6 +589,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 cameraMode = CameraMode.TRACKING
                 renderMode = RenderMode.COMPASS
             }
+            LocationService.startService(this)
         } else {
             permissionsManager = PermissionsManager(this)
             permissionsManager.requestLocationPermissions(this)

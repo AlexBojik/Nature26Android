@@ -13,6 +13,7 @@
         android:id="@+id/check"
         android:layout_width="30dp"
         android:layout_height="30dp"
+        android:layout_gravity="center"
         android:buttonTint="#504B4B"
         android:focusable="false" />
 
@@ -25,19 +26,18 @@
 
     <ImageView
         android:id="@+id/feature_color"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:minHeight="30dp"
-        android:scaleType="centerCrop"
-        app:srcCompat="@drawable/ic_baseline_stop_24" />
-
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:background="@drawable/border"
+        android:contentDescription="TODO" />
 
     <TextView
         android:id="@+id/feature_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:layout_marginStart="5dp"
+        android:layout_gravity="center"
         android:text="TextView"
         android:textSize="16sp"
         android:textStyle="bold" />

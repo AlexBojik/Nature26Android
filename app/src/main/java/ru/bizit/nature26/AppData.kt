@@ -4,6 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.SensorManager
 import android.os.IBinder
+import com.google.gson.JsonObject
+import com.mapbox.geojson.CoordinateContainer
+import com.mapbox.geojson.GeoJson
+import com.mapbox.geojson.Geometry
+import com.mapbox.geojson.gson.GeometryGeoJson
 import dagger.Component
 import dagger.Module
 import dagger.Provides
@@ -23,7 +28,8 @@ class Feature(
     var name: String,
     var description: String,
     var color: String?,
-    var symbol: String?
+    var symbol: String?,
+    var geoObject: GeoObject
 ) {}
 
 class NameValue(
@@ -31,14 +37,14 @@ class NameValue(
     var value: String
 ) {}
 
-class GeoObject (
+class GeoObject(
     var id: Int,
     var layerId: Int,
     var name: String,
     var type: String,
-//    var geoJson: Geometry,
+    var geoJson: JsonObject?,
     var description: String
-)
+) {}
 
 class News (
     var id: Int,
@@ -82,6 +88,7 @@ class AppData() {
     var user: User = User()
     var lat: Double = 0.0
     var lon: Double = 0.0
+    var featureToFly: BehaviorSubject<Feature> = BehaviorSubject.create()
 }
 
 @Module

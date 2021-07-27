@@ -1,5 +1,12 @@
 package ru.bizit.nature26.adapter
 
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.Shape
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,6 +51,9 @@ class FeatureListAdapter(private val featureList: MutableList<Feature>, private 
 
         if (!current.color.isNullOrEmpty()) {
             holder.itemView.feature_color.setColorFilter(current.color!!.toColorInt())
+        }
+        holder.itemView.feature_name.setOnClickListener {
+            appData.featureToFly.onNext(current)
         }
     }
 
@@ -99,10 +109,23 @@ class ExpandableListAdapter(private val layerList: MutableList<Layer>): BaseExpa
             }
 
             itemView.feature_name.text = item.name
+
+            var color =  Color.WHITE
+            var lineColor = Color.WHITE
+
             if (!item.color.isNullOrEmpty()) {
-                val color = item.color?.toUpperCase(Locale.ROOT)?.toColorInt()
-                color?.let { itemView.feature_color.setColorFilter(it) }
+                color = item.color?.toUpperCase(Locale.ROOT)?.toColorInt()!!
             }
+            if (!item.lineColor.isNullOrEmpty()) {
+                lineColor = item.lineColor?.toUpperCase(Locale.ROOT)?.toColorInt()!!
+            }
+
+            val lineWidth = item.lineWidth
+            val d = GradientDrawable().apply {
+                color?.let { setColor(it) }
+                lineColor?.let { setStroke(lineWidth, lineColor) }
+            }
+            itemView.feature_color.background = d
         }
         val id = parent?.resources?.getIdentifier(item?.symbol, "mipmap", parent.context.packageName)
         if (id != null) {
