@@ -118,7 +118,7 @@ class ShareBottomSheetDialog : DaggerBottomSheetDialogFragment() {
         }
         val photoURI: Uri = FileProvider.getUriForFile(
             sheet.context,
-            "ru.bizit.nature26.fileprovider",
+            "ru.bizit.nature26.FileProvider",
             photoFile!!
         )
 
