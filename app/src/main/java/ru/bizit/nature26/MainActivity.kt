@@ -559,6 +559,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
     override fun onDestroy() {
         super.onDestroy()
         mapView?.onDestroy()
+        LocationService.stopService(this)
     }
 
 //    private fun flyToMyLocation() {

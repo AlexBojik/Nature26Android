@@ -112,6 +112,11 @@ class LocationService : Service()  {
             ContextCompat.startForegroundService(context, startIntent)
         }
 
+        fun stopService(context: Context) {
+            val stopIntent = Intent(context, LocationService::class.java)
+            context.stopService(stopIntent)
+        }
+
         class LTRLocationListener : android.location.LocationListener {
 
             override fun onProviderDisabled(provider: String) {}
