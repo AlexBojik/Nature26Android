@@ -10,21 +10,20 @@
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Слои с данными"
+        android:text="@string/layer_list_name"
         android:layout_margin="16dp"
         android:textSize="24sp"
         android:textStyle="bold" />
-
-    <ExpandableListView
-        android:id="@+id/layerList"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
     <Button
         android:id="@+id/buttonOk"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Применить"
+        android:text="@string/accept_name"
         android:textColor="@color/black" />
+
+    <ExpandableListView
+        android:id="@+id/layerList"
+        android:layout_width="match_parent"
+        android:layout_height="613dp" />
 </LinearLayout>

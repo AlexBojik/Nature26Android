@@ -99,13 +99,18 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 style.addImage("san", BitmapFactory.decodeResource(resources, R.mipmap.san))
                 style.addImage("pit", BitmapFactory.decodeResource(resources, R.mipmap.pit))
                 style.addImage("rekr", BitmapFactory.decodeResource(resources, R.mipmap.rekr))
-                style.addImage("reddozer",
-                    BitmapFactory.decodeResource(resources, R.mipmap.reddozer))
-                style.addImage("greendozer",
-                    BitmapFactory.decodeResource(resources, R.mipmap.greendozer))
+                style.addImage("reddozer", BitmapFactory.decodeResource(resources, R.mipmap.reddozer))
+                style.addImage("greendozer", BitmapFactory.decodeResource(resources, R.mipmap.greendozer))
                 style.addImage("cont", BitmapFactory.decodeResource(resources, R.mipmap.cont))
                 style.addImage("dam", BitmapFactory.decodeResource(resources, R.mipmap.dam))
                 style.addImage("resh", BitmapFactory.decodeResource(resources, R.mipmap.resh))
+                style.addImage("tree", BitmapFactory.decodeResource(resources, R.mipmap.tree))
+                style.addImage("simpletree", BitmapFactory.decodeResource(resources, R.mipmap.simpletree))
+                style.addImage("duck", BitmapFactory.decodeResource(resources, R.mipmap.duck))
+                style.addImage("min", BitmapFactory.decodeResource(resources, R.mipmap.min))
+                style.addImage("list", BitmapFactory.decodeResource(resources, R.mipmap.list))
+                style.addImage("planet", BitmapFactory.decodeResource(resources, R.mipmap.planet))
+                style.addImage("hands", BitmapFactory.decodeResource(resources, R.mipmap.hands))
 
                 val baseButton = findViewById<FloatingActionButton>(R.id.baseLayersButton)
                 baseButton.setOnClickListener {
@@ -333,25 +338,26 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
     private fun updateLayers(style: Style) {
         appData.layers.forEach { layer ->
             layer.layers?.forEach { child ->
-                val source = style.getSource("layer" + child.id.toString())
-                if (source != null) {
-                    val l = style.getLayer("layer" + child.id.toString())
-                    val lp = style.getLayer("layer" + child.id.toString() + "-point")
-                    val lc = style.getLayer("layer" + child.id.toString() + "-cluster")
-                    val ll = style.getLayer("layer" + child.id.toString() + "-line")
+                val id = child.id.toString()
+                val source = style.getSource("layer$id")
+                val l = style.getLayer("layer$id")
+                val lp = style.getLayer("layer$id-point")
+                val lc = style.getLayer("layer$id-cluster")
+                val ll = style.getLayer("layer$id-line")
 
-                    if (child.visible) {
-                        l?.setProperties(visibility(VISIBLE))
-                        lp?.setProperties(visibility(VISIBLE))
-                        lc?.setProperties(visibility(VISIBLE))
-                        ll?.setProperties(visibility(VISIBLE))
-                    } else {
-                        l?.setProperties(visibility(Property.NONE))
-                        lp?.setProperties(visibility(Property.NONE))
-                        lc?.setProperties(visibility(Property.NONE))
-                        ll?.setProperties(visibility(Property.NONE))
-                    }
-                } else if (child.visible) {
+                l?.setProperties(visibility(Property.NONE))
+                lp?.setProperties(visibility(Property.NONE))
+                lc?.setProperties(visibility(Property.NONE))
+                ll?.setProperties(visibility(Property.NONE))
+
+                if (child.visible) {
+                    l?.setProperties(visibility(VISIBLE))
+                    lp?.setProperties(visibility(VISIBLE))
+                    lc?.setProperties(visibility(VISIBLE))
+                    ll?.setProperties(visibility(VISIBLE))
+                }
+
+                if (source == null && child.visible) {
                     loadGeoJson(child, style)
                 }
             }
@@ -379,7 +385,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
             style.addLayer(fillLayer)
         }
         if (!layer.symbol.isNullOrEmpty()) {
-            val idCluster = "cluster" + layer.id.toString()
+            val idCluster = "layer" + layer.id.toString() + "-cluster"
             val geoJsonUrl = URI("http://nature.mpr26.ru/api/cluster/" + layer.id.toString())
             val source = GeoJsonSource(idCluster, geoJsonUrl)
             style.addSource(source)

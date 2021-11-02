@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Природа26</string>
+    <string name="layer_list_name">Слои с данными</string>
+    <string name="accept_name">Применить</string>
 </resources>
