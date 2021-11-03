@@ -10,7 +10,7 @@ android {
         applicationId "ru.bizit.nature26"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 8
+        versionCode 9
         versionName "1.2.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
