@@ -365,7 +365,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
     }
 
     private fun loadGeoJson(layer: Layer, style: Style) {
-        val geoJsonUrl = URI("http://nature.mpr26.ru/api/layers/" + layer.id.toString())
+        val geoJsonUrl = URI("https://nature.mpr26.ru/api/layers/" + layer.id.toString())
         val source = GeoJsonSource("layer" + layer.id.toString(), geoJsonUrl)
         style.addSource(source)
         drawFill(layer, style)
@@ -386,7 +386,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
         }
         if (!layer.symbol.isNullOrEmpty()) {
             val idCluster = "layer" + layer.id.toString() + "-cluster"
-            val geoJsonUrl = URI("http://nature.mpr26.ru/api/cluster/" + layer.id.toString())
+            val geoJsonUrl = URI("https://nature.mpr26.ru/api/cluster/" + layer.id.toString())
             val source = GeoJsonSource(idCluster, geoJsonUrl)
             style.addSource(source)
 

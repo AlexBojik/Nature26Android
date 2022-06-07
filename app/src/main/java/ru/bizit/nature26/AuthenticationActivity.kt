@@ -26,7 +26,7 @@ class AuthenticationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_auth)
 
-        val authorizationUrl = "http://nature.mpr26.ru/api/auth"
+        val authorizationUrl =  "https://nature.mpr26.ru/api/auth"
         val builder = CustomTabsIntent.Builder()
         val customTabsIntent = builder.build()
         customTabsIntent.launchUrl(
