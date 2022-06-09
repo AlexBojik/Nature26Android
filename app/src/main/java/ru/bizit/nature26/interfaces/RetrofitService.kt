@@ -24,7 +24,7 @@ interface RetrofitServices {
     @POST("send")
     fun postMessage(@Body message: UserMessage): Call<MutableList<String>>
 
-    @GET("news")
+    @GET("news_list")
     fun getNews(): Call<MutableList<News>>
 
     @POST("check")
