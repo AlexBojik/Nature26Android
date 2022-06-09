@@ -475,7 +475,7 @@ class MainActivity: DaggerAppCompatActivity(), PermissionsListener {
                 call: Call<MutableList<News>>,
                 response: Response<MutableList<News>>
             ) {
-                appData.loadedNews = response.body() as MutableList<News>
+                appData.loadedNews = (response.body() as MutableList<News>).sortedByDescending { news -> news.start  } as MutableList<News>
                  NewsBottomSheetDialog().apply {
                     show(supportFragmentManager, NewsBottomSheetDialog.TAG)
                 }
